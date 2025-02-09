@@ -2,86 +2,39 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import icons from "../../constants/icons.js";
 import { styles } from "./home.style.js";
 import Despesa from "../../components/despesa/despesa.jsx";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import api from "../../services/api.js";
+import { useFocusEffect } from "@react-navigation/native";
 
 const Home = (props) => {
   const [total, setTotal] = useState(0);
   const [despesas, setDespesas] = useState([]);
 
   const OpenDespesa = (id) => {
-    props.navigation.navigate("despesas");
+    props.navigation.navigate("despesas", {
+      id: id,
+    });
   };
 
-  const ListarDespesas = () => {
-    // Simulando o acesso a API...
-    const dados = [
-      {
-        id: 1,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-carro.png",
-        categoria: "Carro",
-        descricao: "Pagamento IPVA",
-        valor: 2500,
-      },
-      {
-        id: 2,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-casa.png",
-        categoria: "Casa",
-        descricao: "Condomínio",
-        valor: 620,
-      },
-      {
-        id: 3,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-lazer.png",
-        categoria: "Lazer",
-        descricao: "Sorvete no parque",
-        valor: 17.5,
-      },
-      {
-        id: 4,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-mercado.png",
-        categoria: "Mercado",
-        descricao: "Compras Walmart",
-        valor: 375,
-      },
-      {
-        id: 5,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-treinamento.png",
-        categoria: "Educação",
-        descricao: "Faculdade",
-        valor: 490,
-      },
-      {
-        id: 6,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-viagem.png",
-        categoria: "Viagem",
-        descricao: "Passagem Aérea",
-        valor: 610,
-      },
-      {
-        id: 7,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-mercado.png",
-        categoria: "Mercado",
-        descricao: "Compras Churrasco",
-        valor: 144.3,
-      },
-      {
-        id: 8,
-        icon: "https://jornadajs-devpoint.s3.amazonaws.com/icon-viagem.png",
-        categoria: "Viagem",
-        descricao: "Hotel",
-        valor: 330,
-      },
-    ];
+  const ListarDespesas = async () => {
+    try {
+      //Buscar dados na API
+      const response = await api.get("/despesas");
+      setDespesas(response.data);
 
-    let soma = 0;
-    for (var i = 0; i < dados.length; i++) soma = soma + dados[i].valor;
-    setTotal(soma);
-    setDespesas(dados);
+      // Calcular a soma das despesas
+      let soma = 0;
+      for (var i = 0; i < response.data.length; i++)
+        soma = soma + Number(response.data[i].valor);
+      setTotal(soma);
+    } catch (error) {}
   };
 
-  useEffect(() => {
-    ListarDespesas();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      ListarDespesas();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
@@ -104,7 +57,7 @@ const Home = (props) => {
               <Despesa
                 key={desp.id}
                 id={desp.id}
-                icon={desp.icon}
+                icon={desp.categoriaDetalhe.icon}
                 categoria={desp.categoria}
                 descricao={desp.descricao}
                 valor={desp.valor}

@@ -1,25 +1,82 @@
-import { Image, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { styles } from "./cad-despesa.style.js";
 import icons from "../../constants/icons.js";
 import { Picker } from "@react-native-picker/picker";
-import { useState } from "react";
+import api from "../../services/api.js";
 
 const CadDespesa = (props) => {
-  const [id, setId] = useState(0);
   const [valor, setValor] = useState(0);
   const [descricao, setDescricao] = useState("");
   const [categoria, setCategoria] = useState("");
 
-  const handleSalvar = () => {
+  const handleSalvar = async () => {
     // Salvar a despesa na API
-
-    props.navigation.navigate("home");
+    try {
+      if (props.route.params.id > 0) {
+        await api.put("/despesas/" + props.route.params.id, {
+          descricao: descricao,
+          categoria: categoria,
+          valor: valor,
+        });
+      } else {
+        await api.post("/despesas", {
+          descricao: descricao,
+          categoria: categoria,
+          valor: valor,
+        });
+      }
+      props.navigation.navigate("home");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Erro ao salvar dados.");
+    }
   };
-  const handleExcluir = () => {
+  const handleExcluir = async () => {
     // Excluir a despesa na API
+    try {
+      await api.delete("/despesas/" + props.route.params.id);
+      props.navigation.navigate("home");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Erro ao excluir despesa.");
+    }
 
     props.navigation.navigate("home");
   };
+
+  const DadosDespesa = async (id) => {
+    try {
+      // Buscar dados na API
+      const response = await api.get("/despesas/" + id);
+      setDescricao(response.data.descricao);
+      setCategoria(response.data.categoria);
+      setValor(response.data.valor);
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Erro ao buscar dados da despesa");
+    }
+  };
+
+  useEffect(() => {
+    //Tratar o texto do header
+    props.navigation.setOptions({
+      title: props.route.params.id > 0 ? "Editar Despesa" : "Nova Despesa",
+    });
+
+    // Buscar dados da despesa na API
+    if (props.route.params.id > 0) {
+      DadosDespesa(props.route.params.id);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.containerField}>
@@ -27,8 +84,9 @@ const CadDespesa = (props) => {
         <TextInput
           placeholder="0,00"
           style={styles.inputValor}
-          defaultValue="0"
+          defaultValue={valor.toLocaleString()}
           keyboardType="decimal-pad"
+          onChangeText={(texto) => setValor(texto)}
         />
       </View>
       <View style={styles.containerField}>
@@ -36,7 +94,8 @@ const CadDespesa = (props) => {
         <TextInput
           placeholder="Ex.: Aluguel"
           style={styles.inputText}
-          defaultValue=""
+          defaultValue={descricao}
+          onChangeText={(texto) => setDescricao(texto)}
         />
       </View>
       <View style={styles.containerField}>

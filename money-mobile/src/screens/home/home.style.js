@@ -6,6 +6,7 @@ export const styles = {
     backgroundColor: COLORS.white,
     alignItems: "center",
     padding: 20,
+    paddingTop: 50,
   },
   logo: {
     width: 100,

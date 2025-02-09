@@ -3,7 +3,7 @@ import { styles } from "./despesa.style.js";
 
 const Despesa = (props) => {
   return (
-    <TouchableOpacity onPress={() => props.onClick(0)}>
+    <TouchableOpacity onPress={() => props.onClick(props.id)}>
       <View style={styles.despesa}>
         <View style={styles.containerIcon}>
           <Image
@@ -19,7 +19,9 @@ const Despesa = (props) => {
         </View>
         <View style={styles.containerValor}>
           <Text style={styles.despesaValor}>
-            {props.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            {Number(props.valor).toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+            })}
           </Text>
         </View>
       </View>
