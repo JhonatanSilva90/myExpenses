@@ -4,6 +4,9 @@ import Sidebar from "../../components/sidebar/sidebar.jsx";
 import Navbar from "../../components/navbar/navbar.jsx";
 import "./home.css";
 import icons from "../../styles/icons.js";
+import api from "../../services/api.js";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
 
 const Home = () => {
   let dados = [
@@ -79,15 +82,25 @@ const Home = () => {
   const [despesas, setDespesas] = useState([]);
   const [total, setTotal] = useState(0);
 
-  const ListarDespesa = (filtro) => {
-    if (filtro) dados = dadosFiltrados;
+  const ListarDespesa = async (busca) => {
+    try {
+      //Acessar os dados na API
+      const response = await api.get("/despesas", {
+        params: {
+          filtro: busca,
+        },
+      });
+      setDespesas(response.data);
 
-    let soma = 0;
-    for (var i = 0; i < dados.length; i++) {
-      soma = soma + dados[i].valor;
+      let soma = 0;
+      for (var i = 0; i < response.data.length; i++) {
+        soma = soma + Number(response.data[i].valor);
+      }
+      setTotal(soma);
+    } catch (error) {
+      alert("Erro ao buscar dados.");
+      console.log(error);
     }
-    setTotal(soma);
-    setDespesas(dados);
   };
 
   const OpenDespesa = (id) => {
@@ -95,7 +108,25 @@ const Home = () => {
   };
 
   const DeleteDespesa = (id) => {
-    alert(id);
+    try {
+      confirmAlert({
+        title: "Exclusão",
+        message: "Confirma a exclusã da despesa?",
+        buttons: [
+          {
+            label: "Sim",
+            onClick: async () => {
+              await api.delete("/despesas/" + id);
+              ListarDespesa();
+            },
+          },
+          {
+            label: "Não",
+            onClick: () => {},
+          },
+        ],
+      });
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -120,7 +151,7 @@ const Home = () => {
           <table>
             <thead>
               <tr>
-                <th>Id. Despesa</th>
+                {/* <th>Id. Despesa</th> */}
                 <th>Descrição</th>
                 <th>Categoria</th>
                 <th className="text-right">Valor</th>
@@ -131,12 +162,21 @@ const Home = () => {
               {despesas.map((desp) => {
                 return (
                   <tr>
-                    <td>{desp.id}</td>
+                    {/* <td>{desp.id}</td> */}
                     <td>{desp.descricao}</td>
-                    <td>{desp.categoria}</td>
+                    <td>
+                      <div>
+                        <img
+                          className="icon-sm"
+                          src={desp.categoriaDetalhe.icon}
+                          alt=""
+                        />{" "}
+                        <span className="ml-10">{desp.categoria}</span>
+                      </div>
+                    </td>
                     <td className="text-right">
                       R$:{" "}
-                      {desp.valor.toLocaleString("pt-BR", {
+                      {Number(desp.valor).toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
@@ -159,6 +199,13 @@ const Home = () => {
               })}
             </tbody>
           </table>
+
+          {despesas.length === 0 && (
+            <div className="empty-despesa">
+              <img src={icons.empty} alt="" />
+              <p>Nenhuma despesa encontrada.</p>
+            </div>
+          )}
         </div>
       </div>
     </>

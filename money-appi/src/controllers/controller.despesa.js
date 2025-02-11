@@ -9,6 +9,15 @@ const Listar = async (request, response) => {
       id: "desc",
     },
   };
+
+  if (request.query.filtro) {
+    config.where = {
+      descricao: {
+        contains: request.query.filtro,
+      },
+    };
+  }
+
   const desp = await prismaClient.despesa.findMany(config);
   return response.json(desp);
 };
